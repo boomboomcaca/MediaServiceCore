@@ -40,7 +40,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     api 'com.squareup.retrofit2:retrofit:2.6.0' // work with Java 8
     api 'com.squareup.retrofit2:converter-gson:2.6.0' // work with Java 8
-    api 'com.squareup.okhttp3:logging-interceptor:4.2.0' // work with Java 8
-    api 'com.squareup.okhttp3:okhttp-urlconnection:4.2.0' // fix for some Android 4.4 and lower
+    api 'com.squareup.okhttp3:logging-interceptor:' + okhttpVersion // work with Java 8
+    api 'com.squareup.okhttp3:okhttp-urlconnection:' + okhttpVersion // fix for some Android 4.4 and lower
     implementation 'com.eclipsesource.j2v8:j2v8:6.2.1@aar'
 }
