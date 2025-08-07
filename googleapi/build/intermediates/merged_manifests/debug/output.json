@@ -10,8 +10,8 @@
       "apkData": {
         "type": "MAIN",
         "splits": [],
-        "versionCode": 15,
-        "versionName": "0.1.5",
+        "versionCode": 1,
+        "versionName": "0.1.0",
         "outputFile": "googleapi-debug.aar",
         "fullName": "debug",
         "baseName": "debug",

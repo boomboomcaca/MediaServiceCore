@@ -1,0 +1,46 @@
+apply from: '../../SharedModules/constants.gradle'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion project.ext.compileSdkVersion
+    buildToolsVersion project.ext.buildToolsVersion
+    testOptions.unitTests.includeAndroidResources = true
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        minSdkVersion project.ext.minSdkVersion
+        targetSdkVersion project.ext.targetSdkVersion
+        versionCode 1
+        versionName "0.1.0"
+
+        // required for androidTest support
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // More info: http://myhexaville.com/2017/03/10/android-multidex/
+        multiDexEnabled = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':sharedutils')
+    implementation project(':mediaserviceinterfaces')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    api 'com.squareup.retrofit2:retrofit:2.6.0' // work with Java 8
+    api 'com.squareup.retrofit2:converter-gson:2.6.0' // work with Java 8
+    api 'com.squareup.okhttp3:logging-interceptor:4.2.0' // work with Java 8
+    api 'com.squareup.okhttp3:okhttp-urlconnection:4.2.0' // fix for some Android 4.4 and lower
+    implementation 'com.eclipsesource.j2v8:j2v8:6.2.1@aar'
+}

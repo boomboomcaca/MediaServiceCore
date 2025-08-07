@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="com.liskovsoft.googleapi"
-    android:versionCode="15"
-    android:versionName="0.1.5" > <!-- NOTE: use older api -->
+    android:versionCode="1"
+    android:versionName="0.1.0" >
+
     <uses-sdk
         android:minSdkVersion="17"
-        android:targetSdkVersion="26"
-        tools:overrideLibrary="         com.squareup.quickjs" />
+        android:targetSdkVersion="26" />
 
     <uses-permission android:name="android.permission.INTERNET" />
 

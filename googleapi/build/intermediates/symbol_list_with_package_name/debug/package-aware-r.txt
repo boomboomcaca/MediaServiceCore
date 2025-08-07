@@ -992,7 +992,6 @@ string abc_shareactionprovider_share_with_application
 string abc_toolbar_collapse_description
 string app_name
 string copy
-string dump_debug_info
 string expand_button_title
 string log_stored_in_path
 string log_to_file_started
@@ -1000,7 +999,6 @@ string no_btn
 string not_set
 string preference_copied
 string search_menu_title
-string section_trending
 string status_bar_notification_info_overflow
 string summary_collapsed_preference_list
 string v7_preference_off
