@@ -37,7 +37,7 @@ dependencies {
     implementation project(':sharedutils')
     implementation project(':mediaserviceinterfaces')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     api 'com.squareup.retrofit2:retrofit:2.6.0' // work with Java 8
     api 'com.squareup.retrofit2:converter-gson:2.6.0' // work with Java 8
     api 'com.squareup.okhttp3:logging-interceptor:4.2.0' // work with Java 8
