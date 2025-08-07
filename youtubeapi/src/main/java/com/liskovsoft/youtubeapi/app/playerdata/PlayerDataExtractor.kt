@@ -3,10 +3,10 @@ package com.liskovsoft.youtubeapi.app.playerdata
 import com.eclipsesource.v8.V8ScriptExecutionException
 import com.liskovsoft.sharedutils.mylogger.Log
 import com.liskovsoft.youtubeapi.app.models.cached.PlayerDataCached
-import com.liskovsoft.youtubeapi.common.api.FileApi
-import com.liskovsoft.youtubeapi.common.helpers.ReflectionHelper
-import com.liskovsoft.youtubeapi.common.helpers.RetrofitHelper
-import com.liskovsoft.youtubeapi.common.js.JSInterpret
+import com.liskovsoft.googlecommon.common.api.FileApi
+import com.liskovsoft.googlecommon.common.helpers.ReflectionHelper
+import com.liskovsoft.googlecommon.common.helpers.RetrofitHelper
+import com.liskovsoft.googlecommon.common.js.JSInterpret
 import com.liskovsoft.youtubeapi.service.internal.MediaServiceData
 
 internal class PlayerDataExtractor(val playerUrl: String) {
@@ -89,8 +89,13 @@ internal class PlayerDataExtractor(val playerUrl: String) {
     }
 
     private fun fixupPlayerUrl(playerUrl: String): String {
+        // Those are implements global helper functions. No fix. Fallback to regular.
+        // See https://github.com/yt-dlp/yt-dlp/issues/12398
+        // tv url: https://www.youtube.com/s/player/69b31e11/tv-player-es6-tce.vflset/tv-player-es6-tce.js
+        // web url: https://www.youtube.com/s/player/e12fbea4/player_ias_tce.vflset/en_US/base.js
         return playerUrl
-            .replace("/player_ias_tce.vflset/", "/player_ias.vflset/") // See https://github.com/yt-dlp/yt-dlp/issues/12398
+            .replace("-tce", "") // global helper functions, tv url
+            .replace("_tce", "") // global helper functions, web url
             .replace("/player_ias.vflset/en_US/base.js", "/tv-player-ias.vflset/tv-player-ias.js") // does not validates cpn
     }
 

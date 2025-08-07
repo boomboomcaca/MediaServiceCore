@@ -4,7 +4,6 @@ import android.content.Context;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.liskovsoft.sharedutils.helpers.AppInfoHelpers;
 import com.liskovsoft.sharedutils.helpers.Helpers;
@@ -68,7 +67,7 @@ public class MediaServiceData {
     private NSigData mNSigData;
     private NSigData mSigData;
     private boolean mIsMoreSubtitlesUnlocked;
-    private boolean mIsPremiumFixEnabled;
+    private boolean mIsLegacyUIEnabled;
 
     private static class MediaServiceCache extends SharedPreferencesBase {
         private static final String PREF_NAME = MediaServiceCache.class.getSimpleName();
@@ -114,17 +113,12 @@ public class MediaServiceData {
         return sInstance;
     }
 
-    public void setScreenId(String screenId) {
-        mScreenId = screenId;
-        persistData();
-    }
-
     public String getScreenId() {
         return mScreenId;
     }
 
-    public void setDeviceId(String deviceId) {
-        mDeviceId = deviceId;
+    public void setScreenId(String screenId) {
+        mScreenId = screenId;
         persistData();
     }
 
@@ -138,6 +132,11 @@ public class MediaServiceData {
         }
 
         return mDeviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        mDeviceId = deviceId;
+        persistData();
     }
 
     public Pair<Integer, Boolean> getVideoInfoType() {
@@ -175,7 +174,15 @@ public class MediaServiceData {
         persistData();
     }
 
-    public void enableFormat(int formats, boolean enable) {
+    public boolean isFormatEnabled(int formats) {
+        if (mEnabledFormats == FORMATS_NONE) {
+            setFormatEnabled(FORMATS_DASH | FORMATS_URL, true);
+        }
+
+        return (mEnabledFormats & formats) == formats;
+    }
+
+    public void setFormatEnabled(int formats, boolean enable) {
         if (enable) {
             mEnabledFormats |= formats;
         } else {
@@ -187,15 +194,11 @@ public class MediaServiceData {
         YouTubeMediaItemService.instance().invalidateCache(); // Remove current cached video
     }
 
-    public boolean isFormatEnabled(int formats) {
-        if (mEnabledFormats == FORMATS_NONE) {
-            enableFormat(FORMATS_DASH | FORMATS_URL, true);
-        }
-
-        return (mEnabledFormats & formats) == formats;
+    public boolean isContentHidden(int content) {
+        return (mHiddenContent & content) == content;
     }
 
-    public void hideContent(int content, boolean hide) {
+    public void setContentHidden(int content, boolean hide) {
         if (hide) {
             mHiddenContent |= content;
         } else {
@@ -203,10 +206,6 @@ public class MediaServiceData {
         }
 
         persistData();
-    }
-
-    public boolean isContentHidden(int content) {
-        return (mHiddenContent & content) == content;
     }
 
     public PoTokenResponse getPoToken() {
@@ -253,30 +252,29 @@ public class MediaServiceData {
         persistData();
     }
 
-    public void unlockMoreSubtitles(boolean unlock) {
+    public boolean isMoreSubtitlesUnlocked() {
+        return mIsMoreSubtitlesUnlocked;
+    }
+
+    public void setMoreSubtitlesUnlocked(boolean unlock) {
         mIsMoreSubtitlesUnlocked = unlock;
         persistData();
 
         YouTubeMediaItemService.instance().invalidateCache(); // Remove current cached video
     }
 
-    public boolean isMoreSubtitlesUnlocked() {
-        return mIsMoreSubtitlesUnlocked;
+    public boolean isNpPotSupported() {
+        return PoTokenGate.isNpPotSupported();
     }
 
-    public void enablePremiumFix(boolean enable) {
-        mIsPremiumFixEnabled = enable;
+    public boolean isLegacyUIEnabled() {
+        return mIsLegacyUIEnabled;
+    }
+
+    public void setLegacyUIEnabled(boolean enable) {
+        mIsLegacyUIEnabled = enable;
+
         persistData();
-
-        YouTubeMediaItemService.instance().invalidateCache(); // Remove current cached video
-    }
-
-    public boolean isPremiumFixEnabled() {
-        return mIsPremiumFixEnabled;
-    }
-
-    public boolean supportsWebView() {
-        return PoTokenGate.supportsNpPot();
     }
 
     private void restoreData() {
@@ -303,8 +301,9 @@ public class MediaServiceData {
         mHiddenContent = Helpers.parseInt(split, 18,
                 CONTENT_SHORTS_SUBSCRIPTIONS | CONTENT_SHORTS_HISTORY | CONTENT_SHORTS_TRENDING | CONTENT_UPCOMING_CHANNEL | CONTENT_UPCOMING_HOME | CONTENT_UPCOMING_SUBSCRIPTIONS);
         mIsMoreSubtitlesUnlocked = Helpers.parseBoolean(split, 19);
-        mIsPremiumFixEnabled = Helpers.parseBoolean(split, 20);
+        //mIsPremiumFixEnabled = Helpers.parseBoolean(split, 20);
         mVisitorCookie = Helpers.parseStr(split, 21);
+        mIsLegacyUIEnabled = Helpers.parseBoolean(split, 22);
     }
 
     private void persistDataInt() {
@@ -317,7 +316,7 @@ public class MediaServiceData {
                         mVideoInfoType, mSkipAuth, null, null, null, null,
                         null, mEnabledFormats, null, null, mPoToken, mAppInfo,
                         mPlayerData, mClientData, mHiddenContent, mIsMoreSubtitlesUnlocked,
-                        mIsPremiumFixEnabled, mVisitorCookie));
+                        null, mVisitorCookie, mIsLegacyUIEnabled));
     }
 
     private void restoreCachedData() {

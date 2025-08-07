@@ -10,7 +10,7 @@ import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 import com.liskovsoft.youtubeapi.app.AppService;
 import com.liskovsoft.youtubeapi.app.PoTokenGate;
 import com.liskovsoft.youtubeapi.common.helpers.AppClient;
-import com.liskovsoft.youtubeapi.common.helpers.RetrofitHelper;
+import com.liskovsoft.googlecommon.common.helpers.RetrofitHelper;
 import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 import com.liskovsoft.youtubeapi.videoinfo.InitialResponse;
 import com.liskovsoft.youtubeapi.videoinfo.VideoInfoServiceBase;
@@ -89,7 +89,7 @@ public class VideoInfoService extends VideoInfoServiceBase {
         decipherFormats(result.getAdaptiveFormats());
         decipherFormats(result.getRegularFormats());
 
-        if (result.isHistoryBroken()) {
+        if (result.isHistoryBroken() && !result.isUnplayable()) {
             // Only the tv client supports auth features
             result.sync(getVideoInfo(AppClient.TV, videoId, clickTrackingParams));
         }
@@ -124,14 +124,17 @@ public class VideoInfoService extends VideoInfoServiceBase {
     }
 
     public void switchNextFormat() {
+        // First, try to reset pot cache
         if (!mIsUnplayable && isPotSupported() && PoTokenGate.resetCache()) {
             return;
         }
+        // Then, try to disable Premium
         if (getData().isFormatEnabled(MediaServiceData.FORMATS_EXTENDED_HLS)) {
             // Skip additional formats fetching that could produce an error
-            getData().enableFormat(MediaServiceData.FORMATS_EXTENDED_HLS, false);
+            getData().setFormatEnabled(MediaServiceData.FORMATS_EXTENDED_HLS, false);
             return;
         }
+        // And last, try to switch the client
         nextVideoInfo();
         persistVideoInfoType();
     }
@@ -258,7 +261,7 @@ public class VideoInfoService extends VideoInfoServiceBase {
             result = getVideoInfo(AppClient.TV, videoInfo.getTrailerVideoId(), clickTrackingParams);
         } else if (videoInfo.isUnplayable()) {
             result = getFirstPlayable(
-                    () -> getVideoInfo(AppClient.TV, videoId, clickTrackingParams), // Supports Auth. Restricted (18+) videos
+                    () -> getVideoInfo(AppClient.TV, videoId, clickTrackingParams), // Supports auth. Fixes "please sign in" bug!
                     () -> getVideoInfo(AppClient.WEB_EMBED, videoId, clickTrackingParams), // Restricted (18+) videos
                     () -> getVideoInfoGeo(AppClient.WEB, videoId, clickTrackingParams) // Video clip blocked in current location
             );

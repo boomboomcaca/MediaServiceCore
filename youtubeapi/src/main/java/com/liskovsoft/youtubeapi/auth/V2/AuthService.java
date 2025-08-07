@@ -4,12 +4,12 @@ import androidx.annotation.Nullable;
 
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.youtubeapi.app.AppService;
-import com.liskovsoft.youtubeapi.auth.models.auth.AccessToken;
-import com.liskovsoft.youtubeapi.auth.models.auth.RefreshToken;
-import com.liskovsoft.youtubeapi.auth.models.auth.UserCode;
-import com.liskovsoft.youtubeapi.auth.models.info.AccountInt;
-import com.liskovsoft.youtubeapi.auth.models.info.AccountsList;
-import com.liskovsoft.youtubeapi.common.helpers.RetrofitHelper;
+import com.liskovsoft.googlecommon.common.models.auth.AccessToken;
+import com.liskovsoft.googlecommon.common.models.auth.RefreshToken;
+import com.liskovsoft.googlecommon.common.models.auth.UserCode;
+import com.liskovsoft.googlecommon.common.models.auth.info.AccountInt;
+import com.liskovsoft.googlecommon.common.models.auth.info.AccountsList;
+import com.liskovsoft.googlecommon.common.helpers.RetrofitHelper;
 import retrofit2.Call;
 
 import java.util.List;
@@ -109,6 +109,9 @@ public class AuthService {
         }
     }
 
+    /**
+     * NOTE: Requires the auth header to be set before the call
+     */
     @Nullable
     public List<AccountInt> getAccounts() {
         Call<AccountsList> wrapper = mAuthApi.getAccountsList(AuthApiHelper.getAccountsListQuery());

@@ -17,11 +17,12 @@ import com.liskovsoft.youtubeapi.next.v2.WatchNextService;
 import com.liskovsoft.youtubeapi.next.v2.WatchNextServiceWrapper;
 import com.liskovsoft.youtubeapi.rss.RssService;
 import com.liskovsoft.youtubeapi.search.SearchServiceWrapper;
+import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 import com.liskovsoft.youtubeapi.utils.UtilsService;
 import com.liskovsoft.youtubeapi.browse.v1.BrowseService;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.youtubeapi.common.models.impl.mediagroup.BaseMediaGroup;
-import com.liskovsoft.youtubeapi.common.helpers.YouTubeHelper;
+import com.liskovsoft.googlecommon.common.helpers.YouTubeHelper;
 import com.liskovsoft.youtubeapi.search.SearchService;
 import com.liskovsoft.youtubeapi.search.models.SearchResult;
 import com.liskovsoft.youtubeapi.service.data.YouTubeMediaGroup;
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class YouTubeContentService implements ContentService {
+class YouTubeContentService implements ContentService {
     private static final String TAG = YouTubeContentService.class.getSimpleName();
     private static YouTubeContentService sInstance;
 
@@ -49,25 +50,7 @@ public class YouTubeContentService implements ContentService {
     }
 
     @Override
-    public MediaGroup getSearch(String searchText) {
-        checkSigned();
-
-        SearchResult search = getSearchService().getSearch(searchText);
-        List<MediaGroup> groups = YouTubeMediaGroup.from(search, MediaGroup.TYPE_SEARCH);
-        return groups != null && groups.size() > 0 ? groups.get(0) : null;
-    }
-
-    @Override
-    public MediaGroup getSearch(String searchText, int options) {
-        checkSigned();
-
-        SearchResult search = getSearchService().getSearch(searchText, options);
-        List<MediaGroup> groups = YouTubeMediaGroup.from(search, MediaGroup.TYPE_SEARCH);
-        return groups != null && groups.size() > 0 ? groups.get(0) : null;
-    }
-
-    @Override
-    public List<MediaGroup> getSearchAlt(String searchText) {
+    public List<MediaGroup> getSearch(String searchText) {
         checkSigned();
 
         SearchResult search = getSearchService().getSearch(searchText);
@@ -75,7 +58,7 @@ public class YouTubeContentService implements ContentService {
     }
 
     @Override
-    public List<MediaGroup> getSearchAlt(String searchText, int options) {
+    public List<MediaGroup> getSearch(String searchText, int options) {
         checkSigned();
 
         SearchResult search = getSearchService().getSearch(searchText, options);
@@ -83,23 +66,13 @@ public class YouTubeContentService implements ContentService {
     }
 
     @Override
-    public Observable<MediaGroup> getSearchObserve(String searchText) {
+    public Observable<List<MediaGroup>> getSearchObserve(String searchText) {
         return RxHelper.fromCallable(() -> getSearch(searchText));
     }
 
     @Override
-    public Observable<MediaGroup> getSearchObserve(String searchText, int options) {
+    public Observable<List<MediaGroup>> getSearchObserve(String searchText, int options) {
         return RxHelper.fromCallable(() -> getSearch(searchText, options));
-    }
-
-    @Override
-    public Observable<List<MediaGroup>> getSearchAltObserve(String searchText) {
-        return RxHelper.fromCallable(() -> getSearchAlt(searchText));
-    }
-
-    @Override
-    public Observable<List<MediaGroup>> getSearchAltObserve(String searchText, int options) {
-        return RxHelper.fromCallable(() -> getSearchAlt(searchText, options));
     }
 
     @Override
@@ -120,7 +93,19 @@ public class YouTubeContentService implements ContentService {
 
         checkSigned();
 
-        return getBrowseService2().getSubscriptions();
+        MediaGroup subscriptions = getBrowseService2().getSubscriptions();
+
+        // TEMP fix. Subs not fully populated.
+        if (subscriptions != null && subscriptions.getMediaItems() != null && subscriptions.getMediaItems().size() <= 3) {
+            MediaGroup continuation = continueGroup(subscriptions);
+            if (continuation == null || continuation.getMediaItems() == null || continuation.getMediaItems().isEmpty()) {
+                if (getMediaServiceData() != null)
+                    getMediaServiceData().setLegacyUIEnabled(true);
+                return getBrowseService2().getSubscriptions();
+            }
+        }
+
+        return subscriptions;
     }
 
     @Override
@@ -292,15 +277,20 @@ public class YouTubeContentService implements ContentService {
         });
     }
 
-    private MediaGroup getShorts() {
-        checkSigned();
-
-        return getBrowseService2().getShorts();
-    }
-
     @Override
     public Observable<MediaGroup> getShortsObserve() {
-        return RxHelper.fromCallable(this::getShorts);
+        return RxHelper.create(emitter -> {
+            checkSigned();
+
+            MediaGroup shorts = getBrowseService2().getShorts();
+
+            if (shorts != null && shorts.getNextPageKey() != null) {
+                emitGroups(emitter, shorts);
+            } else {
+                emitGroupsPartial(emitter, shorts);
+                emitGroups(emitter, getBrowseService2().getShorts2());
+            }
+        });
     }
 
     @Override
@@ -451,7 +441,7 @@ public class YouTubeContentService implements ContentService {
 
     private void emitGroups(ObservableEmitter<List<MediaGroup>> emitter, List<MediaGroup> groups) {
         if (groups == null || groups.isEmpty()) {
-            String msg = "emitGroups2: groups are null or empty";
+            String msg = "emitGroups: groups are null or empty";
             Log.e(TAG, msg);
             RxHelper.onError(emitter, msg);
             return;
@@ -496,6 +486,29 @@ public class YouTubeContentService implements ContentService {
         if (!collector.isEmpty()) {
             emitter.onNext(collector);
         }
+    }
+
+    private void emitGroups(ObservableEmitter<MediaGroup> emitter, MediaGroup groups) {
+        if (groups == null) {
+            String msg = "emitGroups: groups are null or empty";
+            Log.e(TAG, msg);
+            RxHelper.onError(emitter, msg);
+            return;
+        }
+
+        emitGroupsPartial(emitter, groups);
+
+        emitter.onComplete();
+    }
+
+    private void emitGroupsPartial(ObservableEmitter<MediaGroup> emitter, MediaGroup groups) {
+        if (groups == null) {
+            return;
+        }
+
+        Log.d(TAG, "emitGroups: begin emitting group of type %s...", groups.getType());
+
+        emitter.onNext(groups);
     }
 
     @Override
@@ -675,5 +688,10 @@ public class YouTubeContentService implements ContentService {
     @NonNull
     private static WatchNextService getWatchNextService() {
         return WatchNextServiceWrapper.INSTANCE;
+    }
+
+    @Nullable
+    private static MediaServiceData getMediaServiceData() {
+        return MediaServiceData.instance();
     }
 }

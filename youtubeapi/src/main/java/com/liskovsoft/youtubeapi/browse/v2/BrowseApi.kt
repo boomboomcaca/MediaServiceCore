@@ -1,8 +1,8 @@
 package com.liskovsoft.youtubeapi.browse.v2
 
 import com.liskovsoft.youtubeapi.browse.v2.gen.*
-import com.liskovsoft.youtubeapi.common.converters.gson.WithGson
-import com.liskovsoft.youtubeapi.common.helpers.DefaultHeaders
+import com.liskovsoft.googlecommon.common.converters.gson.WithGson
+import com.liskovsoft.googlecommon.common.helpers.DefaultHeaders
 import com.liskovsoft.youtubeapi.next.v2.gen.WatchNextResultContinuation
 import retrofit2.Call
 import retrofit2.http.Body
@@ -11,14 +11,6 @@ import retrofit2.http.POST
 
 @WithGson
 internal interface BrowseApi {
-    //@Headers(
-    //    "Content-Type: application/json"
-    //)
-    //@POST("https://www.youtube.com/youtubei/v1/browse")
-    //fun getBrowseResult(@Body browseQuery: String?,
-    //                    @Header("User-Agent") userAgent: String = DefaultHeaders.USER_AGENT_WEB,
-    //                    @Header("Referer") referer: String? = "https://www.youtube.com/"): Call<BrowseResult?>
-
     @Headers(
         "Content-Type: application/json",
         "User-Agent: " + DefaultHeaders.USER_AGENT_WEB,

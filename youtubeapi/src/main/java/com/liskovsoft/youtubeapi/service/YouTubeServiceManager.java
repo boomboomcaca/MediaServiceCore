@@ -15,7 +15,7 @@ import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.youtubeapi.app.AppService;
 import com.liskovsoft.youtubeapi.channelgroups.ChannelGroupServiceImpl;
-import com.liskovsoft.youtubeapi.common.locale.LocaleManager;
+import com.liskovsoft.googlecommon.common.locale.LocaleManager;
 import com.liskovsoft.youtubeapi.videoinfo.V2.VideoInfoService;
 
 import io.reactivex.disposables.Disposable;
@@ -24,7 +24,6 @@ public class YouTubeServiceManager implements ServiceManager {
     private static final String TAG = YouTubeServiceManager.class.getSimpleName();
     private static YouTubeServiceManager sInstance;
     private Disposable mRefreshCoreDataAction;
-    private Disposable mRefreshPoTokenAction;
 
     private YouTubeServiceManager() {
         Log.d(TAG, "Starting...");
@@ -89,6 +88,11 @@ public class YouTubeServiceManager implements ServiceManager {
     }
 
     @Override
+    public void invalidateMediaItemCache() {
+        getYouTubeMediaItemService().invalidateCache();
+    }
+
+    @Override
     public void refreshCacheIfNeeded() {
         refreshCacheIfNeededInt();
     }
@@ -99,29 +103,12 @@ public class YouTubeServiceManager implements ServiceManager {
         getVideoInfoService().switchNextFormat();
     }
 
-    //@Override
-    //public void applyAntiBotFix() {
-    //    getYouTubeMediaItemService().invalidateCache();
-    //    refreshPoTokenIfNeeded();
-    //}
-
     private void refreshCacheIfNeededInt() {
         if (RxHelper.isAnyActionRunning(mRefreshCoreDataAction)) {
             return;
         }
 
         mRefreshCoreDataAction = RxHelper.execute(RxHelper.fromRunnable(getAppService()::refreshCacheIfNeeded));
-    }
-
-    private void refreshPoTokenIfNeeded() {
-        if (RxHelper.isAnyActionRunning(mRefreshPoTokenAction)) {
-            return;
-        }
-
-        mRefreshPoTokenAction = RxHelper.execute(RxHelper.createLong(emitter -> {
-            getAppService().refreshPoTokenIfNeeded();
-            emitter.onComplete();
-        }));
     }
 
     @NonNull
